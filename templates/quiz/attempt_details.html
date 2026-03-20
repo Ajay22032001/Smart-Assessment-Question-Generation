@@ -1,0 +1,119 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Attempt Details - {{ subcategory.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'quiz:history' %}">History</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'quiz:quiz_comparison' result.quiz_topic %}">{{ result.quiz_topic }}</a></li>
+            <li class="breadcrumb-item active">Attempt #{{ result.attempt_number }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fa-solid fa-file-lines text-primary me-2"></i>
+                Attempt #{{ result.attempt_number }} Details
+            </h2>
+            <p class="text-muted">
+                {{ result.quiz_topic }} • {{ result.difficulty|title }} • {{ result.created_at|date:"F d, Y" }}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'quiz:retake_quiz' result.id %}" class="btn btn-success">
+                <i class="fa-solid fa-rotate-right me-1"></i>Retake This Quiz
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body text-center">
+                    <h6>Score</h6>
+                    <h2 class="mb-0">{{ result.score_percent|floatformat:1 }}%</h2>
+                    <small>{{ result.correct_answers }}/{{ result.total_questions }} correct</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body text-center">
+                    <h6>Status</h6>
+                    <h2 class="mb-0">{% if result.is_pass %}PASSED{% else %}FAILED{% endif %}</h2>
+                    <small>{% if result.is_pass %}Congratulations!{% else %}Keep practicing{% endif %}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body text-center">
+                    <h6>Time Taken</h6>
+                    <h2 class="mb-0">{{ result.total_time_taken }}s</h2>
+                    <small>{{ result.total_time_taken|default:"No timer" }}</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-white">
+                <div class="card-body text-center">
+                    <h6>Attempt</h6>
+                    <h2 class="mb-0">#{{ result.attempt_number }}</h2>
+                    <small>of {{ result.quiz_topic }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Review -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Question Review</h5>
+        </div>
+        <div class="card-body">
+            {% for r in results %}
+            <div class="mb-4 pb-4 {% if not forloop.last %}border-bottom{% endif %}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="fw-bold">Q{{ forloop.counter }}. {{ r.question }}</h6>
+                    <span class="badge {% if r.is_correct %}bg-success{% else %}bg-danger{% endif %} px-3 py-2">
+                        {% if r.is_correct %}Correct{% else %}Incorrect{% endif %}
+                    </span>
+                </div>
+                
+                <div class="row g-2">
+                    {% for opt in r.options %}
+                    <div class="col-md-6">
+                        <div class="p-2 rounded {% if forloop.counter0 == r.correct_index %}bg-success bg-opacity-10 border border-success{% elif forloop.counter0 == r.selected and not r.is_correct %}bg-danger bg-opacity-10 border border-danger{% endif %}">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-light text-dark me-2">{{ forloop.counter0|add:1 }}</span>
+                                <span class="{% if forloop.counter0 == r.correct_index %}fw-bold{% endif %}">
+                                    {{ opt }}
+                                </span>
+                                {% if forloop.counter0 == r.correct_index %}
+                                <i class="fa-solid fa-check-circle text-success ms-auto"></i>
+                                {% elif forloop.counter0 == r.selected and not r.is_correct %}
+                                <i class="fa-solid fa-times-circle text-danger ms-auto"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if r.explanation %}
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="fa-solid fa-robot me-2"></i>
+                    <strong>Explanation:</strong> {{ r.explanation }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

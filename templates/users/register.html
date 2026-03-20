@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Smart Assessment</title>
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #74ABE2, #5563DE);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Form Container */
+        form {
+            background: #fff;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 400px;
+            max-width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 28px;
+        }
+
+        /* Form Paragraph Styling */
+        form p {
+            margin: 0 0 15px 0;
+        }
+
+        /* Input Fields */
+        input[type=text], 
+        input[type=email], 
+        input[type=password] {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 5px 0 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        input:focus {
+            border-color: #5563DE;
+            box-shadow: 0 0 8px rgba(85, 99, 222, 0.2);
+            outline: none;
+        }
+
+        /* Labels */
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        /* Help Text */
+        .helptext {
+            display: block;
+            color: #777;
+            font-size: 12px;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        /* Error Styling */
+        .errorlist {
+            color: #dc3545;
+            list-style: none;
+            margin: 0 0 10px 0;
+            padding: 0;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .errorlist li {
+            margin-bottom: 3px;
+        }
+
+        /* Submit Button */
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #5563DE, #3949AB);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #3949AB, #283593);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(57, 73, 171, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Login Link */
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: #5563DE;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+
+        .login-link a:hover {
+            color: #3949AB;
+            text-decoration: underline;
+        }
+
+        /* Alert Message */
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            form {
+                padding: 30px 20px;
+            }
+            
+            h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>📝 User Registration</h2>
+    
+    <!-- Alert message for JavaScript validation -->
+    <div id="alertMessage" class="alert alert-error" style="display: none;"></div>
+    
+    <form method="POST" onsubmit="return validateForm();" novalidate>
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        {{ form.as_p }}
+        
+        <button type="submit">Register</button>
+        
+        <div class="login-link">
+            Already have an account? <a href="{% url 'login' %}">Login here</a>
+        </div>
+    </form>
+
+    <script>
+        function validateForm() {
+            let password = document.getElementById("id_password");
+            let confirm = document.getElementById("id_confirm_password");
+            let alertMessage = document.getElementById("alertMessage");
+            
+            // Clear any previous alerts
+            alertMessage.style.display = "none";
+            alertMessage.innerHTML = "";
+            
+            // Check if password fields exist
+            if (!password || !confirm) {
+                return true; // Let Django handle validation if fields don't exist
+            }
+            
+            let passwordValue = password.value.trim();
+            let confirmValue = confirm.value.trim();
+            
+            // Check if passwords match
+            if (passwordValue !== confirmValue) {
+                alertMessage.style.display = "block";
+                alertMessage.innerHTML = "❌ Passwords do not match!";
+                
+                // Highlight the fields
+                password.style.borderColor = "#dc3545";
+                confirm.style.borderColor = "#dc3545";
+                
+                // Scroll to alert
+                alertMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+            
+            // Check password length
+            if (passwordValue.length < 6) {
+                alertMessage.style.display = "block";
+                alertMessage.innerHTML = "❌ Password must be at least 6 characters long!";
+                
+                password.style.borderColor = "#dc3545";
+                
+                // Scroll to alert
+                alertMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+            
+            // Check if password contains at least one number (optional but recommended)
+            if (!/\d/.test(passwordValue)) {
+                alertMessage.style.display = "block";
+                alertMessage.innerHTML = "⚠️ Password should contain at least one number!";
+                // Allow submission but show warning
+                setTimeout(() => {
+                    alertMessage.style.display = "none";
+                }, 3000);
+            }
+            
+            // Reset border colors
+            password.style.borderColor = "#ddd";
+            if (confirm) confirm.style.borderColor = "#ddd";
+            
+            return true;
+        }
+
+        // Real-time password match checking
+        document.addEventListener('DOMContentLoaded', function() {
+            let password = document.getElementById("id_password");
+            let confirm = document.getElementById("id_confirm_password");
+            
+            if (password && confirm) {
+                function checkMatch() {
+                    if (confirm.value.length > 0) {
+                        if (password.value !== confirm.value) {
+                            confirm.style.borderColor = "#dc3545";
+                        } else {
+                            confirm.style.borderColor = "#28a745";
+                        }
+                    }
+                }
+                
+                password.addEventListener('keyup', checkMatch);
+                confirm.addEventListener('keyup', checkMatch);
+            }
+        });
+    </script>
+</body>
+</html>

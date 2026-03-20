@@ -1,0 +1,470 @@
+{% extends 'quiz/base.html' %}
+{% load static %}
+
+{% block title %}Quiz Comparison - {{ topic }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    .metric-card {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-5px);
+    }
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    .metric-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .improvement-positive {
+        color: #10b981;
+        font-weight: bold;
+    }
+    .improvement-negative {
+        color: #ef4444;
+        font-weight: bold;
+    }
+    .attempt-card {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        transition: all 0.2s;
+        border-left: 4px solid #4e73df;
+    }
+    .attempt-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateX(5px);
+    }
+    .topic-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+        height: 100%;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    .topic-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(78, 115, 223, 0.2);
+        border-color: #4e73df;
+    }
+    .badge-attempt {
+        background: #4e73df20;
+        color: #4e73df;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="/quiz/history/">History</a></li>
+            <li class="breadcrumb-item active">Performance Comparison</li>
+        </ol>
+    </nav>
+
+    {% if show_topics %}
+        <!-- Topic Selection View -->
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="fa-solid fa-chart-line text-primary me-2"></i>
+                Your Quiz Topics
+            </h1>
+            <p class="text-muted">Select a topic to see your performance over time</p>
+        </div>
+
+        <div class="row g-4">
+            {% for topic in topics %}
+            <div class="col-md-4">
+                <a href="/quiz/comparison/{{ topic.name }}/" class="text-decoration-none">
+                    <div class="topic-card">
+                        <i class="fa-solid fa-book-open fa-3x text-primary mb-3"></i>
+                        <h4 class="mb-2">{{ topic.name }}</h4>
+                        <div class="d-flex justify-content-center gap-3 mb-3">
+                            <span class="badge-attempt">
+                                <i class="fa-solid fa-rotate-right me-1"></i>{{ topic.attempts }} attempts
+                            </span>
+                            <span class="badge-attempt">
+                                <i class="fa-solid fa-trophy me-1"></i>Best: {{ topic.best }}%
+                            </span>
+                        </div>
+                        <span class="btn btn-outline-primary btn-sm">View Details →</span>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+    {% elif error %}
+        <div class="alert alert-warning text-center py-5">
+            <i class="fa-solid fa-exclamation-triangle fa-3x mb-3"></i>
+            <h4>{{ error }}</h4>
+            <p class="mb-3">Take some quizzes first to see your progress!</p>
+            <a href="{% url 'quiz:category_list' %}" class="btn btn-primary">
+                <i class="fa-solid fa-play me-1"></i>Start Quiz
+            </a>
+        </div>
+
+    {% else %}
+        <!-- Comparison View -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="display-6 fw-bold mb-1">
+                    <i class="fa-solid fa-chart-simple text-primary me-2"></i>
+                    {{ topic }} Performance
+                </h1>
+                <p class="text-muted">{{ metrics.total_attempts }} attempts • Last attempt on {{ results.last.created_at|date:"M d, Y" }}</p>
+            </div>
+            <div>
+                <a href="/quiz/comparison/" class="btn btn-outline-secondary me-2">
+                    <i class="fa-solid fa-grid-2 me-1"></i>All Topics
+                </a>
+                <a href="/quiz/history/" class="btn btn-outline-primary">
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i>History
+                </a>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #4e73df, #224abe);">
+                    <div class="metric-label">First Attempt</div>
+                    <div class="metric-value">{{ metrics.first_score }}%</div>
+                    <div class="metric-label">{{ results.first.created_at|date:"M d, Y" }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #1cc88a, #169b6b);">
+                    <div class="metric-label">Latest Attempt</div>
+                    <div class="metric-value">{{ metrics.last_score }}%</div>
+                    <div class="metric-label">{{ results.last.created_at|date:"M d, Y" }}</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #f6c23e, #dda20a);">
+                    <div class="metric-label">Improvement</div>
+                    <div class="metric-value {% if metrics.improvement >= 0 %}improvement-positive{% else %}improvement-negative{% endif %}">
+                        {% if metrics.improvement >= 0 %}+{% endif %}{{ metrics.improvement }}%
+                    </div>
+                    <div class="metric-label">From first attempt</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="metric-card" style="background: linear-gradient(135deg, #e74a3b, #be3e31);">
+                    <div class="metric-label">Best Score</div>
+                    <div class="metric-value">{{ metrics.best_score }}%</div>
+                    <div class="metric-label">Average: {{ metrics.avg_score }}%</div>
+                </div>
+            </div>
+        </div>
+
+        
+    <!-- Charts Row - FIXED -->
+    <div class="row mb-5">
+        <div class="col-md-{% if has_timer %}6{% else %}12{% endif %}">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fa-solid fa-chart-line text-primary me-2"></i>
+                        Score Progression
+                    </h5>
+                    <canvas id="scoreChart" style="height: 350px; width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        {% if has_timer %}
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fa-regular fa-clock text-primary me-2"></i>
+                        Time Taken (seconds)
+                    </h5>
+                    <canvas id="timeChart" style="height: 350px; width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+        <!-- Attempts List -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">
+                    <i class="fa-solid fa-timeline me-2 text-primary"></i>
+                    All Attempts
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for result in results %}
+                <div class="attempt-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-1 text-center">
+                            <span class="badge bg-primary rounded-circle p-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                                #{{ result.attempt_number }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="fw-bold">{{ result.created_at|date:"M d, Y" }}</div>
+                            <small class="text-muted">{{ result.created_at|time }}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="h4 mb-0 {% if result.is_pass %}text-success{% else %}text-danger{% endif %}">
+                                {{ result.score_percent|floatformat:1 }}%
+                            </div>
+                            <small class="text-muted">{{ result.correct_answers }}/{{ result.total_questions }} correct</small>
+                        </div>
+                        <div class="col-md-2">
+                            {% if result.total_time_taken > 0 %}
+                            <div><i class="fa-regular fa-clock me-1"></i> {{ result.total_time_taken }}s</div>
+                            {% else %}
+                            <div class="text-muted">No timer</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <span class="badge bg-light text-dark">{{ result.difficulty|title }}</span>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <a href="/quiz/attempt/{{ result.id }}/" class="btn btn-outline-primary">
+                                <i class="fa-solid fa-eye me-1"></i>Details
+                            </a>
+                            <a href="/quiz/retake/{{ result.id }}/" class="btn btn-outline-success">
+                                <i class="fa-solid fa-rotate-right me-1"></i>Retake
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Improvement Tips -->
+        <div class="alert alert-info mt-4">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fa-solid fa-lightbulb fa-2x me-3"></i>
+                </div>
+                <div>
+                    <h6>Improvement Tips</h6>
+                    <p class="mb-0">
+                        {% if metrics.improvement > 10 %}
+                        🎉 Great progress! You've improved by {{ metrics.improvement }}% since your first attempt.
+                        {% elif metrics.improvement > 0 %}
+                        📈 You're making steady progress. Keep practicing!
+                        {% elif metrics.improvement == 0 %}
+                        📊 Your score is consistent. Try focusing on weak areas to improve.
+                        {% else %}
+                        💪 Don't give up! Review your incorrect answers and try again.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% if not show_topics and not error %}
+<script>
+// Score Chart
+const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+new Chart(scoreCtx, {
+    type: 'line',
+    data: {
+        labels: {{ attempt_numbers|safe }},
+        datasets: [{
+            label: 'Score %',
+            data: {{ score_data|safe }},
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.1)',
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: '#4e73df',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                    display: true,
+                    text: 'Score (%)'
+                },
+                ticks: {
+                    stepSize: 10,
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Attempt Number'
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `Score: ${context.raw}%`;
+                    }
+                }
+            }
+        },
+        animation: {
+            duration: 1000,
+            easing: 'easeInOutQuad'
+        }
+    }
+});
+
+// Time Chart - FIXED VERSION
+{% if has_timer %}
+const timeCtx = document.getElementById('timeChart').getContext('2d');
+new Chart(timeCtx, {
+    type: 'line',
+    data: {
+        labels: {{ attempt_numbers|safe }},
+        datasets: [{
+            label: 'Time Taken (seconds)',
+            data: {{ time_data|safe }},
+            borderColor: '#f6c23e',
+            backgroundColor: 'rgba(246, 194, 62, 0.1)',
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: '#f6c23e',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointRadius: 5,
+            pointHoverRadius: 7
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 2,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Time (seconds)'
+                },
+                ticks: {
+                    stepSize: 10,  // ✅ Har 10 second mein tick
+                    maxTicksLimit: 8,  // ✅ Maximum 8 ticks
+                    callback: function(value) {
+                        return value + 's';
+                    }
+                },
+                // ✅ Grid lines ko kam karo
+                grid: {
+                    display: true,
+                    color: 'rgba(0,0,0,0.05)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Attempt Number'
+                },
+                ticks: {
+                    maxRotation: 45,
+                    minRotation: 30
+                },
+                grid: {
+                    display: false
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                enabled: true,
+                mode: 'index',
+                intersect: false,
+                callbacks: {
+                    label: function(context) {
+                        return `⏱️ Time: ${context.raw} seconds`;
+                    }
+                }
+            },
+            legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                    boxWidth: 12,
+                    font: {
+                        size: 12
+                    }
+                }
+            }
+        },
+        // ✅ Animation slow karo
+        animation: {
+            duration: 1500,  // 1.5 seconds
+            easing: 'easeInOutQuart'
+        },
+        hover: {
+            mode: 'nearest',
+            intersect: true,
+            animationDuration: 300
+        },
+        // ✅ Elements styling
+        elements: {
+            line: {
+                borderWidth: 2,
+                tension: 0.3
+            },
+            point: {
+                radius: 4,
+                hoverRadius: 6,
+                borderWidth: 2
+            }
+        },
+        // ✅ Layout padding
+        layout: {
+            padding: {
+                top: 20,
+                bottom: 20,
+                left: 10,
+                right: 10
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endif %}
+{% endblock %}

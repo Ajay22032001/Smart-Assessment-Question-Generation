@@ -1,0 +1,83 @@
+[
+  {
+    "model": "quiz.category",
+    "pk": 1,
+    "fields": {
+      "name": "Academic",
+      "description": "Academic subjects and related quizzes.",
+      "image": null
+    }
+  },
+  {
+    "model": "quiz.category",
+    "pk": 2,
+    "fields": {
+      "name": "Entertainment",
+      "description": "Movies, music and more.",
+      "image": null
+    }
+  },
+  {
+    "model": "quiz.category",
+    "pk": 3,
+    "fields": {
+      "name": "General Knowledge",
+      "description": "General knowledge and current affairs.",
+      "image": null
+    }
+  },
+  {
+    "model": "quiz.subcategory",
+    "pk": 1,
+    "fields": {
+      "category": 1,
+      "name": "Physics",
+      "description": "The study of matter and energy."
+    }
+  },
+  {
+    "model": "quiz.subcategory",
+    "pk": 2,
+    "fields": {
+      "category": 1,
+      "name": "Chemistry",
+      "description": "The study of substances and reactions."
+    }
+  },
+  {
+    "model": "quiz.subcategory",
+    "pk": 3,
+    "fields": {
+      "category": 2,
+      "name": "Movies",
+      "description": "Test your knowledge of films and cinema."
+    }
+  },
+  {
+    "model": "quiz.subcategory",
+    "pk": 4,
+    "fields": {
+      "category": 2,
+      "name": "Music",
+      "description": "Explore genres, artists, and music theory."
+    }
+  },
+  {
+    "model": "quiz.subcategory",
+    "pk": 5,
+    "fields": {
+      "category": 3,
+      "name": "Current Affairs",
+      "description": "Stay updated with recent events and news."
+    }
+  },
+  {
+    "model": "quiz.subcategory",
+    "pk": 6,
+    "fields": {
+      "category": 3,
+      "name": "History",
+      "description": "Journey through past events and civilizations."
+    }
+  }
+]

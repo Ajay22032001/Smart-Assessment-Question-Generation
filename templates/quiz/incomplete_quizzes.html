@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Incomplete Quizzes{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Incomplete Quizzes</h2>
+            <p class="text-muted">Continue where you left off</p>
+        </div>
+        <a href="{% url 'quiz:category_list' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i>New Quiz
+        </a>
+    </div>
+
+    {% if incomplete_quizzes %}
+    <div class="row">
+        {% for quiz in incomplete_quizzes %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm hover-card">
+                <div class="card-body">
+                    <!-- Category & Difficulty Badges -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-primary bg-opacity-10 text-primary">
+                                <i class="fa-solid fa-layer-group me-1"></i>{{ quiz.subcategory.category.name }}
+                            </span>
+                        </div>
+                        <span class="badge {% if quiz.difficulty == 'easy' %}bg-success{% elif quiz.difficulty == 'medium' %}bg-warning{% else %}bg-danger{% endif %} bg-opacity-10 
+                                   {% if quiz.difficulty == 'easy' %}text-success{% elif quiz.difficulty == 'medium' %}text-warning{% else %}text-danger{% endif %}">
+                            <i class="fa-solid fa-signal me-1"></i>{{ quiz.difficulty|title }}
+                        </span>
+                    </div>
+
+                    <!-- Title -->
+                    <h5 class="card-title mb-2">{{ quiz.subcategory.name }}</h5>
+                    
+                    <!-- Progress (simplified) -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="text-muted">Progress</span>
+                            <span class="fw-semibold">0/{{ quiz.question_count }}</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Meta Info -->
+                    <div class="text-muted small mb-3">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="fa-regular fa-clock me-2"></i>
+                            Started {{ quiz.created_at|timesince }} ago
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fa-regular fa-hourglass me-2"></i>
+                            Last accessed {{ quiz.last_accessed|timesince }} ago
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'quiz:resume_quiz' quiz.id %}" class="btn btn-primary flex-grow-1">
+                            <i class="fa-solid fa-play me-1"></i>Resume
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" 
+                                data-bs-toggle="modal" data-bs-target="#abandonModal{{ quiz.id }}">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abandon Confirmation Modal -->
+        <div class="modal fade" id="abandonModal{{ quiz.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Abandon Quiz</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to abandon this quiz?</p>
+                        <p class="text-muted small mb-0">Quiz: {{ quiz.subcategory.name }}</p>
+                        <p class="text-warning small mb-0"><i class="fa-solid fa-exclamation-triangle me-1"></i> This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <a href="{% url 'quiz:abandon_quiz' quiz.id %}" class="btn btn-danger">
+                            Yes, Abandon Quiz
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <div class="empty-state-icon mb-4">
+            <i class="fa-solid fa-hourglass fa-4x text-muted opacity-25"></i>
+        </div>
+        <h4 class="mb-2">No Incomplete Quizzes</h4>
+        <p class="text-muted mb-4">You don't have any quizzes in progress.</p>
+        <a href="{% url 'quiz:category_list' %}" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-play me-2"></i>Start New Quiz
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .hover-card {
+        transition: all 0.2s ease;
+    }
+    .hover-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.15) !important;
+    }
+</style>
+{% endblock %}

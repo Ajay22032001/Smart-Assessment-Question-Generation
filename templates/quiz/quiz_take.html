@@ -1,0 +1,240 @@
+<!-- templates/quiz/quiz_take.html - Show submission ID -->
+
+{% extends 'quiz/base.html' %}
+
+{% block title %}Quiz - {{ subcategory.name }}{% endblock %}
+
+{% block content %}
+<style>
+    /* Same CSS as before */
+    .navbar, footer, .breadcrumb {
+        display: none !important;
+    }
+    
+    .quiz-wrapper {
+        max-width: 1200px;
+        margin: 20px auto;
+        padding: 0 20px;
+        display: flex;
+        gap: 25px;
+    }
+    
+    .left-sidebar {
+        width: 250px;
+        flex-shrink: 0;
+    }
+    
+    .timer-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        position: sticky;
+        top: 20px;
+        text-align: center;
+    }
+    
+    #side-timer {
+        font-family: 'Courier New', monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        background: #f8f9fc;
+        padding: 10px;
+        border-radius: 10px;
+    }
+    
+    .main-content {
+        flex: 1;
+    }
+    
+    .top-bar {
+        background: white;
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* ✅ Submission ID display */
+    .submission-id {
+        background: #6c757d;
+        color: white;
+        padding: 5px 15px;
+        border-radius: 30px;
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
+    
+    .question-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    
+    .option-item {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        padding: 15px 20px;
+        cursor: pointer;
+    }
+    
+    .option-item.selected {
+        border-color: #4e73df;
+        background: #e7f1ff;
+    }
+    
+    .btn-nav {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    
+    .btn-next {
+        background: #4e73df;
+        color: white;
+    }
+    
+    .btn-prev {
+        background: white;
+        border: 2px solid #dee2e6;
+        color: #6c757d;
+    }
+    
+    .btn-submit {
+        background: #28a745;
+        color: white;
+    }
+</style>
+
+<div class="quiz-wrapper">
+    <!-- Left Sidebar -->
+    <div class="left-sidebar">
+        <div class="timer-card">
+            <div id="side-timer">
+                <span id="timer-mins">00</span>:<span id="timer-secs">00</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar with Submission ID -->
+        <div class="top-bar">
+            <span class="question-number">
+                Q{{ current_index|add:1 }}/{{ total }}
+            </span>
+            <span class="answered-count">
+                {{ answered_count }} Answered
+            </span>
+            <span class="submission-id" id="submissionIdDisplay">
+                <i class="fa-regular fa-id-card me-1"></i>
+                ID: {{ current_submission_id }}
+            </span>
+        </div>
+        
+        <!-- Question Card -->
+        <div class="question-card">
+            <div class="question-text">
+                {{ current_question.question_text }}
+            </div>
+            
+            <form method="post" action="{% url 'quiz:quiz_take' %}?q={{ current_index }}" id="quizForm">
+                {% csrf_token %}
+                <input type="hidden" name="current_index" value="{{ current_index }}">
+                <input type="hidden" name="question_id" value="{{ current_question.id }}">
+                <input type="hidden" name="action" id="actionField" value="next">
+                <input type="hidden" name="time_spent" id="timeSpent" value="0">
+                
+                <!-- Options -->
+                <div class="options-list">
+                    {% for opt in options %}
+                    <div class="option-item {% if selected_option == forloop.counter0 %}selected{% endif %}"
+                         onclick="selectOption({{ forloop.counter0 }})">
+                        <input type="radio" name="selected_option" value="{{ forloop.counter0 }}" 
+                               id="opt{{ forloop.counter0 }}" {% if selected_option == forloop.counter0 %}checked{% endif %}>
+                        <label for="opt{{ forloop.counter0 }}">
+                            <strong>{{ forloop.counter0|add:1 }}.</strong> {{ opt }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Navigation -->
+                <div class="nav-buttons">
+                    <button type="submit" name="action" value="prev" class="btn-nav btn-prev"
+                            {% if current_index == 0 %}disabled{% endif %}>
+                        ← Previous
+                    </button>
+                    
+                    {% if current_index == total|add:"-1" %}
+                    <button type="submit" name="action" value="submit" class="btn-nav btn-submit"
+                            onclick="return confirm('Submit quiz?')">
+                        ✓ Submit
+                    </button>
+                    {% else %}
+                    <button type="submit" name="action" value="next" class="btn-nav btn-next">
+                        Save & Continue →
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Timer Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Timer code
+    const minsSpan = document.getElementById('timer-mins');
+    const secsSpan = document.getElementById('timer-secs');
+    
+    let timeLeft = {{ time_left|default:300 }};
+    
+    function updateTimer() {
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
+        minsSpan.textContent = mins.toString().padStart(2, '0');
+        secsSpan.textContent = secs.toString().padStart(2, '0');
+    }
+    
+    updateTimer();
+    
+    if (window.timerInterval) clearInterval(window.timerInterval);
+    
+    window.timerInterval = setInterval(function() {
+        if (timeLeft <= 0) {
+            clearInterval(window.timerInterval);
+            document.getElementById('quizForm').submit();
+            return;
+        }
+        timeLeft--;
+        updateTimer();
+    }, 1000);
+    
+    // Time spent
+    const startTime = Date.now();
+    document.getElementById('quizForm').addEventListener('submit', function() {
+        document.getElementById('timeSpent').value = Math.floor((Date.now() - startTime) / 1000);
+    });
+});
+
+function selectOption(val) {
+    document.querySelectorAll('.option-item').forEach(el => {
+        el.classList.remove('selected');
+    });
+    event.currentTarget.classList.add('selected');
+    
+    document.querySelectorAll('input[name="selected_option"]').forEach(el => {
+        el.checked = (el.value == val);
+    });
+}
+</script>
+{% endblock %}

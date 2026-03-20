@@ -1,0 +1,281 @@
+{% extends 'quiz/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - {{ user.username }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    .stat-card {
+        border-radius: 15px;
+        padding: 25px;
+        color: white;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stat2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .stat4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+    }
+    
+    .activity-item {
+        padding: 15px;
+        border-left: 4px solid #4e73df;
+        background: #f8f9fc;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        transition: background 0.2s;
+    }
+    .activity-item:hover {
+        background: #eaecf4;
+    }
+    
+    .quick-action-btn {
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        background: white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.2s;
+    }
+    .quick-action-btn:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="welcome-box bg-gradient-primary text-white p-4 rounded-4">
+                <h2 class="mb-2">Welcome back, {{ user.username }}! 👋</h2>
+                <p class="mb-0 opacity-75">Ready to test your knowledge today?</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card stat1">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="opacity-75 mb-2">Total Quizzes</h6>
+                        <h2 class="mb-0">{{ total_quizzes }}</h2>
+                    </div>
+                    <i class="fa-solid fa-question-circle fa-3x opacity-50"></i>
+                </div>
+                <div class="mt-3 small opacity-75">
+                    <i class="fa-solid fa-arrow-up me-1"></i>+{{ recent_quizzes_count|default:0 }} this month
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="opacity-75 mb-2">Average Score</h6>
+                        <h2 class="mb-0">{{ avg_score }}%</h2>
+                    </div>
+                    <i class="fa-solid fa-chart-line fa-3x opacity-50"></i>
+                </div>
+                <div class="mt-3 small opacity-75">
+                    {% if avg_score >= 70 %}
+                    <i class="fa-solid fa-trophy me-1"></i>Great job!
+                    {% else %}
+                    <i class="fa-solid fa-arrow-up me-1"></i>Keep improving!
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="opacity-75 mb-2">Best Score</h6>
+                        <h2 class="mb-0">{{ best_score }}%</h2>
+                    </div>
+                    <i class="fa-solid fa-crown fa-3x opacity-50"></i>
+                </div>
+                <div class="mt-3 small opacity-75">
+                    <i class="fa-regular fa-calendar me-1"></i>Achieved on {{ best_score_date|default:"-" }}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card stat4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="opacity-75 mb-2">In Progress</h6>
+                        <h2 class="mb-0">{{ incomplete_quizzes }}</h2>
+                    </div>
+                    <i class="fa-solid fa-hourglass-half fa-3x opacity-50"></i>
+                </div>
+                <div class="mt-3 small opacity-75">
+                    <a href="{% url 'quiz:incomplete_quizzes' %}" class="text-white text-decoration-none">
+                        Resume quiz <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="mb-3">Category Distribution</h5>
+                <canvas id="categoryChart" height="300"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="mb-3">Score Trends</h5>
+                <canvas id="trendChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Quick Actions -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Recent Activity</h5>
+                    <a href="{% url 'quiz:history' %}" class="btn btn-sm btn-outline-primary">
+                        View All <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                
+                {% if recent_activity %}
+                    {% for result in recent_activity %}
+                    <div class="activity-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ result.quiz.subcategory.name }}</h6>
+                                <small class="text-muted">
+                                    <i class="fa-regular fa-calendar me-1"></i>{{ result.created_at|date:"M d, Y" }}
+                                    <span class="mx-2">•</span>
+                                    <i class="fa-regular fa-clock me-1"></i>{{ result.total_time_taken }}s
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge {% if result.is_pass %}bg-success{% else %}bg-danger{% endif %} p-2">
+                                    {{ result.score_percent|floatformat:1 }}%
+                                </span>
+                                <a href="{% url 'quiz:quiz_results' result.id %}" class="btn btn-sm btn-link">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center py-4">No quiz attempts yet. Start your first quiz!</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="chart-container">
+                <h5 class="mb-3">Quick Actions</h5>
+                <div class="d-grid gap-3">
+                    <a href="{% url 'quiz:category_list' %}" class="quick-action-btn text-decoration-none">
+                        <i class="fa-solid fa-play-circle fa-2x text-primary mb-2"></i>
+                        <h6 class="mb-1">Start New Quiz</h6>
+                        <small class="text-muted">Choose category and topic</small>
+                    </a>
+                    
+                    {% if incomplete_quizzes %}
+                    <a href="{% url 'quiz:incomplete_quizzes' %}" class="quick-action-btn text-decoration-none">
+                        <i class="fa-solid fa-hourglass-start fa-2x text-warning mb-2"></i>
+                        <h6 class="mb-1">Resume Quiz</h6>
+                        <small class="text-muted">Continue where you left off</small>
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'quiz:leaderboard' %}" class="quick-action-btn text-decoration-none">
+                        <i class="fa-solid fa-ranking-star fa-2x text-success mb-2"></i>
+                        <h6 class="mb-1">View Leaderboard</h6>
+                        <small class="text-muted">See top performers</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Category Distribution Pie Chart
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+new Chart(categoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ category_labels|safe }},
+        datasets: [{
+            data: {{ category_data|safe }},
+            backgroundColor: [
+                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                '#5a5c69', '#6f42c1', '#fd7e14', '#20c9a6', '#858796'
+            ],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        },
+        cutout: '70%'
+    }
+});
+
+// Score Trends Line Chart
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+    type: 'line',
+    data: {
+        labels: {{ trend_dates|safe }},
+        datasets: [{
+            label: 'Score %',
+            data: {{ trend_scores|safe }},
+            borderColor: '#4e73df',
+            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

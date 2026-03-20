@@ -1,0 +1,84 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Explore Knowledge - Quiz Categories{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Categories</li>
+    </ol>
+</nav>
+
+<!-- Header Section -->
+<div class="text-center mb-5">
+    <h1 class="display-5 fw-bold mb-2">
+        Explore <span class="text-primary">Knowledge</span>
+    </h1>
+    <p class="text-muted">Select a category to reveal specific quiz topics</p>
+</div>
+
+{% if categories %}
+    <div class="row g-4 justify-content-center">
+        {% for category in categories %}
+            <div class="col-12 col-sm-6 col-lg-4">
+                <a href="{% url 'quiz:subcategory_list' category.id %}" class="text-decoration-none text-dark">
+                    <div class="card category-card h-100 border-0 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <!-- Icon with colored background -->
+                            <div class="category-icon-wrap mb-3 mx-auto
+                                {% if 'Academic' in category.name %}bg-academic
+                                {% elif 'Entertainment' in category.name %}bg-entertainment
+                                {% elif 'General' in category.name %}bg-general
+                                {% else %}bg-primary bg-opacity-10{% endif %}">
+                                {% if 'Academic' in category.name %}
+                                    <i class="fa-solid fa-graduation-cap fa-2x text-primary"></i>
+                                {% elif 'Entertainment' in category.name %}
+                                    <i class="fa-solid fa-gamepad fa-2x text-success"></i>
+                                {% elif 'General' in category.name %}
+                                    <i class="fa-solid fa-sparkles fa-2x text-warning"></i>
+                                {% else %}
+                                    <i class="fa-solid fa-folder fa-2x text-primary"></i>
+                                {% endif %}
+                            </div>
+                            <h5 class="card-title fw-bold mb-0">{{ category.name }}</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info text-center">
+        No categories found.
+    </div>
+{% endif %}
+
+<style>
+    .category-card {
+        border-radius: 12px;
+        transition: all 0.25s ease;
+    }
+    .category-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.12) !important;
+    }
+    .category-icon-wrap {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .bg-academic {
+        background-color: rgba(33, 150, 243, 0.15);
+    }
+    .bg-entertainment {
+        background-color: rgba(76, 175, 80, 0.15);
+    }
+    .bg-general {
+        background-color: rgba(255, 167, 38, 0.2);
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'quiz/base.html' %}
+
+{% block title %}Start Quiz - {{ subcategory.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'quiz:category_list' %}">Categories</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'quiz:subcategory_list' category.id %}">{{ category.name }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Start Quiz</li>
+    </ol>
+</nav>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-success text-white py-3">
+        <h5 class="mb-0">
+            <i class="fa-solid fa-circle-play me-2"></i>
+            Ready to Start: {{ subcategory.name }}
+        </h5>
+    </div>
+    <div class="card-body p-4">
+        <p class="mb-2">
+            <strong>Category:</strong> {{ category.name }}<br>
+            <strong>Subcategory:</strong> {{ subcategory.name }}<br>
+            <strong>Difficulty:</strong> {{ settings.difficulty|capfirst }}<br>
+            <strong>Number of Questions:</strong> {{ settings.question_count }}<br>
+            <strong>Timer:</strong>
+            {% if settings.timer_enabled %}Enabled{% else %}Disabled{% endif %}
+        </p>
+
+        <hr>
+
+        <p class="text-muted">
+            This is a placeholder quiz page. Integrate your question engine here using the
+            above settings from the session.
+        </p>
+
+        <a href="{% url 'quiz:category_list' %}" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left me-1"></i>Back to Categories
+        </a>
+    </div>
+</div>
+{% endblock %}

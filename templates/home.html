@@ -1,0 +1,260 @@
+<!-- templates/home.html -->
+{% extends "base.html" %}
+
+{% block title %}Home - Smart Assessment{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .hero {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+    }
+
+    .hero h1 {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        animation: fadeInDown 0.8s ease;
+    }
+
+    .hero .tagline {
+        font-size: 1.3rem;
+        opacity: 0.95;
+        animation: fadeInUp 0.8s ease;
+    }
+
+    .card-container {
+        display: flex;
+        justify-content: center;
+        gap: 2.5rem;
+        flex-wrap: wrap;
+        animation: fadeIn 1s ease;
+    }
+
+    .card {
+        flex: 1;
+        min-width: 300px;
+        max-width: 400px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+    }
+
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+
+    .login-card::before {
+        background: linear-gradient(90deg, #4facfe, #00f2fe);
+    }
+
+    .register-card::before {
+        background: linear-gradient(90deg, #43e97b, #38f9d7);
+    }
+
+    .card-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .login-card .card-icon {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .register-card .card-icon {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .card h2 {
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    .card p {
+        color: #666;
+        margin-bottom: 0.8rem;
+        line-height: 1.6;
+        font-size: 1.1rem;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.8rem 2rem;
+        text-decoration: none;
+        border-radius: 50px;
+        font-weight: 600;
+        margin: 1.5rem 0 1rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 30px rgba(79, 172, 254, 0.4);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+        box-shadow: 0 10px 20px rgba(67, 233, 123, 0.3);
+    }
+
+    .btn-secondary:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 30px rgba(67, 233, 123, 0.4);
+    }
+
+    .text-link {
+        font-size: 0.95rem;
+        color: #777;
+    }
+
+    .text-link a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s ease;
+    }
+
+    .text-link a:hover {
+        color: #764ba2;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+        
+        .card {
+            min-width: 100%;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="hero">
+        <h1>✨ Smart Assessment</h1>
+        <p class="tagline">Test your knowledge, track your progress.</p>
+    </div>
+
+    <!-- templates/home.html -->
+{% if not user.is_authenticated %}
+<div class="card-container">
+    <div class="card login-card">
+        <div class="card-icon">🔐</div>
+        <h2>Login</h2>
+        <p>Welcome back!</p>
+        <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+    </div>
+    
+    <div class="card register-card">
+        <div class="card-icon">📝</div>
+        <h2>Register</h2>
+        <p>Join us today!</p>
+        <a href="{% url 'register' %}" class="btn btn-secondary">Register</a>
+    </div>
+</div>
+{% else %}
+<!-- Logged in users ke liye kuch aur dikhao -->
+<div class="text-center py-5">
+    <h3>Welcome back, {{ user.username }}!</h3>
+    <p>Ready to test your knowledge?</p>
+    <div class="mt-4">
+        <a href="{% url 'quiz:category_list' %}" class="btn btn-primary btn-lg">
+            <i class="fa-solid fa-play me-2"></i>Start Quiz
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-lg ms-2">
+            <i class="fa-solid fa-chart-line me-2"></i>Dashboard
+        </a>
+    </div>
+</div>
+{% endif %}
+</div>
+{% endblock %}

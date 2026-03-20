@@ -1,0 +1,38 @@
+{% extends 'quiz/base.html' %}
+{% block title %}Generating Quiz...{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+    <div class="spinner-border text-primary mb-3" role="status" style="width: 4rem; height: 4rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <h4>Generating quiz for <span class="text-primary">{{ subcategory_name }}</span></h4>
+    <p class="text-muted">Creating questions with Gemini AI. Please wait...</p>
+    <div class="progress mt-3" style="height: 6px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+    </div>
+</div>
+<script>
+(function() {
+    fetch('{% url "quiz:generate_questions_api" %}', { credentials: 'same-origin' })
+        .then(function(r) {
+            return r.json().then(function(data) {
+                return { ok: r.ok, data: data };
+            }).catch(function() {
+                return { ok: false, data: { error: r.statusText || 'Server error' } };
+            });
+        })
+        .then(function(result) {
+            if (result.ok && result.data.success) {
+                window.location.href = result.data.redirect_url || '{% url "quiz:quiz_take" %}';
+            } else {
+                alert(result.data.error || 'Failed to generate questions.');
+                window.location.href = '{% url "quiz:category_list" %}';
+            }
+        })
+        .catch(function(err) {
+            alert('Error: ' + (err.message || 'Check GEMINI_API_KEY in .env and run: pip install google-generativeai'));
+            window.location.href = '{% url "quiz:category_list" %}';
+        });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz History{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Quiz History</h2>
+            <p class="text-muted">Track your learning progress</p>
+        </div>
+        <a href="{% url 'quiz:category_list' %}" class="btn btn-primary">
+            <i class="fa-solid fa-plus me-1"></i>New Quiz
+        </a>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" id="filterForm">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Category</label>
+                        <select name="category" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Categories</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if current_filters.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                                {{ cat.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Subcategory</label>
+                        <select name="subcategory" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Topics</option>
+                            {% for sub in subcategories %}
+    <!-- ✅ YEH LINE CHECK KARO - value="{{ sub.id }}" hona chahiye -->
+                            <option value="{{ sub.id }}" {% if current_filters.subcategory == sub.id|stringformat:"s" %}selected{% endif %}>
+                             {{ sub.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">Difficulty</label>
+                        <select name="difficulty" class="form-select" onchange="this.form.submit()">
+                            <option value="">All</option>
+                            <option value="easy" {% if current_filters.difficulty == 'easy' %}selected{% endif %}>Easy</option>
+                            <option value="medium" {% if current_filters.difficulty == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="hard" {% if current_filters.difficulty == 'hard' %}selected{% endif %}>Hard</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">Sort By</label>
+                        <select name="sort" class="form-select" onchange="this.form.submit()">
+                            <option value="-created_at" {% if current_filters.sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                            <option value="created_at" {% if current_filters.sort == 'created_at' %}selected{% endif %}>Oldest First</option>
+                            <option value="-score_percent" {% if current_filters.sort == '-score_percent' %}selected{% endif %}>Highest Score</option>
+                            <option value="score_percent" {% if current_filters.sort == 'score_percent' %}selected{% endif %}>Lowest Score</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <label class="form-label">Search</label>
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" 
+                                   value="{{ current_filters.search|default:'' }}" 
+                                   placeholder="Search...">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="fa-solid fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quiz List -->
+    <div class="row">
+        {% for result in page_obj %}
+        <div class="col-12 mb-3">
+            <div class="card border-0 shadow-sm hover-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-1">
+                                <a href="{% url 'quiz:quiz_results' result.id %}" class="text-decoration-none text-dark">
+                                    {{ result.quiz.subcategory.name }}
+                                </a>
+                            </h5>
+                            <div class="text-muted small">
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="fa-solid fa-layer-group me-1"></i>{{ result.quiz.subcategory.category.name }}
+                                </span>
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="fa-solid fa-signal me-1"></i>{{ result.quiz.difficulty|title }}
+                                </span>
+                                <span>
+                                    <i class="fa-regular fa-calendar me-1"></i>{{ result.created_at|date:"M d, Y" }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                    <div class="progress-bar {% if result.is_pass %}bg-success{% else %}bg-danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ result.score_percent }}%"></div>
+                                </div>
+                                <span class="fw-bold {% if result.is_pass %}text-success{% else %}text-danger{% endif %}">
+                                    {{ result.score_percent|floatformat:1 }}%
+                                </span>
+                            </div>
+                            <div class="small text-muted mt-1">
+                                {{ result.correct_answers }}/{{ result.total_questions }} correct
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 text-end">
+                            <a href="{% url 'quiz:quiz_results' result.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fa-solid fa-eye me-1"></i>View Details
+                            </a>
+                            <a href="{% url 'quiz:retake_quiz' result.id %}" class="btn btn-outline-success btn-sm">
+                                <i class="fa-solid fa-rotate-right me-1"></i>Retake
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center py-5">
+                <i class="fa-solid fa-clipboard-list fa-3x mb-3 opacity-50"></i>
+                <h5>No quizzes found</h5>
+                <p class="mb-3">You haven't taken any quizzes yet.</p>
+                <a href="{% url 'quiz:category_list' %}" class="btn btn-primary">
+                    <i class="fa-solid fa-play me-1"></i>Start Quiz
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+    .hover-card {
+        transition: all 0.2s ease;
+    }
+    .hover-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15) !important;
+    }
+</style>
+{% endblock %}
