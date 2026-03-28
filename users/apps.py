@@ -6,4 +6,7 @@ class UsersConfig(AppConfig):
     name = 'users'
 
     def ready(self):
-        import users.signals
+        from .utils import create_superuser
+        create_superuser()
+
+    
