@@ -123,7 +123,22 @@ else:
         }
     }
 
+# settings.py - LAST LINE PE YEH DAALO
+import os
 
+if os.environ.get('RENDER'):
+    try:
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        
+        username = os.environ.get('DJANGO_SUPERUSER_USERNAME')
+        password = os.environ.get('DJANGO_SUPERUSER_PASSWORD')
+        
+        if username and password and not User.objects.filter(username=username).exists():
+            User.objects.create_superuser(username=username, email='', password=password)
+            print(f"✅ Superuser '{username}' created!")
+    except Exception as e:
+        print(f"⚠️ Superuser creation skipped: {e}")
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
