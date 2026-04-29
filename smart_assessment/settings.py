@@ -89,16 +89,39 @@ WSGI_APPLICATION = 'smart_assessment.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
+import sys
+if 'collectstatic' in sys.argv:
+    os.system('python manage.py collectstatic --noinput')
 
-import dj_database_url
 
-DATABASES = {
-    'default': dj_database_url.parse(
-        os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+# settings.py में यह कोड Replace करें
+
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# ... (SECRET_KEY, DEBUG, ALLOWED_HOSTS आदि रहने दें)
+
+# ✅ LOCAL DATABASE SETUP (SQLite)
+if 'RENDER' in os.environ:
+    # Production (Render) - PostgreSQL
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # Local Development (Your PC) - SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
